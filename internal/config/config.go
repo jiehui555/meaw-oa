@@ -11,7 +11,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		Port:    getEnv("PORT", "3000"),
-		DBPath:  getEnv("DB_PATH", "meaw.db"),
+		DBPath:  getEnv("DB_PATH", "app.db"),
 		LogPath: getEnv("LOG_PATH", "app.log"),
 	}
 }
