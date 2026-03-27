@@ -1,27 +1,92 @@
 package database
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"log/slog"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/utils"
 
 	"github.com/jiehui555/meaw-oa/internal/model"
 )
 
+type slogLogger struct {
+	LogLevel logger.LogLevel
+}
+
+func newSlogLogger() logger.Interface {
+	return &slogLogger{
+		LogLevel: logger.Info,
+	}
+}
+
+func (l *slogLogger) LogMode(level logger.LogLevel) logger.Interface {
+	newLogger := *l
+	newLogger.LogLevel = level
+	return &newLogger
+}
+
+func (l *slogLogger) Info(ctx context.Context, msg string, data ...any) {
+	if l.LogLevel >= logger.Info {
+		slog.Info(fmt.Sprintf(msg, data...))
+	}
+}
+
+func (l *slogLogger) Warn(ctx context.Context, msg string, data ...any) {
+	if l.LogLevel >= logger.Warn {
+		slog.Warn(fmt.Sprintf(msg, data...))
+	}
+}
+
+func (l *slogLogger) Error(ctx context.Context, msg string, data ...any) {
+	if l.LogLevel >= logger.Error {
+		slog.Error(fmt.Sprintf(msg, data...))
+	}
+}
+
+func (l *slogLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+	if l.LogLevel <= logger.Silent {
+		return
+	}
+
+	elapsed := time.Since(begin)
+	sql, rows := fc()
+
+	attrs := []slog.Attr{
+		slog.String("file", utils.FileWithLineNum()),
+		slog.String("elapsed", elapsed.String()),
+		slog.Int64("rows", rows),
+		slog.String("sql", sql),
+	}
+
+	switch {
+	case err != nil && l.LogLevel >= logger.Error:
+		attrs = append(attrs, slog.String("error", err.Error()))
+		slog.LogAttrs(ctx, slog.LevelError, "gorm", attrs...)
+	case elapsed > 200*time.Millisecond && l.LogLevel >= logger.Warn:
+		slog.LogAttrs(ctx, slog.LevelWarn, "slow query", attrs...)
+	case l.LogLevel >= logger.Info:
+		slog.LogAttrs(ctx, slog.LevelInfo, "gorm", attrs...)
+	}
+}
+
 func Init(dbPath string) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: newSlogLogger(),
 	})
 	if err != nil {
-		log.Fatal(fmt.Errorf("failed to connect database: %w", err))
+		slog.Error("failed to connect database", "error", err)
+		panic(err)
 	}
 
 	if err := db.AutoMigrate(&model.User{}); err != nil {
-		log.Fatal(fmt.Errorf("failed to migrate database: %w", err))
+		slog.Error("failed to migrate database", "error", err)
+		panic(err)
 	}
 
 	seedAdmin(db)
@@ -38,7 +103,8 @@ func seedAdmin(db *gorm.DB) {
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	if err != nil {
-		log.Fatal(fmt.Errorf("failed to hash password: %w", err))
+		slog.Error("failed to hash password", "error", err)
+		panic(err)
 	}
 
 	admin := model.User{
@@ -49,8 +115,9 @@ func seedAdmin(db *gorm.DB) {
 	}
 
 	if err := db.Create(&admin).Error; err != nil {
-		log.Fatal(fmt.Errorf("failed to seed admin user: %w", err))
+		slog.Error("failed to seed admin user", "error", err)
+		panic(err)
 	}
 
-	log.Println("Super admin user created (admin / password)")
+	slog.Info("Super admin user created", "name", "admin", "password", "password")
 }
