@@ -49,6 +49,7 @@ func setupApp(t *testing.T, db *gorm.DB) *fiber.App {
 	api := app.Group("/api")
 	userHandler := NewUserHandler(db)
 	api.Post("/login", userHandler.Login)
+	api.Post("/refresh", userHandler.Refresh)
 
 	return app
 }

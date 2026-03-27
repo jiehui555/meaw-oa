@@ -24,6 +24,7 @@ func main() {
 	api := app.Group("/api")
 	userHandler := handler.NewUserHandler(db)
 	api.Post("/login", userHandler.Login)
+	api.Post("/refresh", userHandler.Refresh)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	slog.Info("server starting", "addr", addr)

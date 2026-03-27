@@ -10,15 +10,31 @@ import (
 var jwtSecret = []byte("meaw-oa-secret")
 
 type Claims struct {
-	UserID uint `json:"user_id"`
+	UserID    uint   `json:"user_id"`
+	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID uint) (string, error) {
+func GenerateAccessToken(userID uint) (string, error) {
 	claims := Claims{
-		UserID: userID,
+		UserID:    userID,
+		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
+}
+
+func GenerateRefreshToken(userID uint) (string, error) {
+	claims := Claims{
+		UserID:    userID,
+		TokenType: "refresh",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
