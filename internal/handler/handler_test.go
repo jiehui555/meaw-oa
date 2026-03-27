@@ -27,7 +27,7 @@ func setupTestDB(t *testing.T) *gorm.DB {
 		t.Fatalf("failed to open test db: %v", err)
 	}
 
-	if err := db.AutoMigrate(&model.User{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.Captcha{}); err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
 
@@ -50,6 +50,8 @@ func setupApp(t *testing.T, db *gorm.DB) *fiber.App {
 	userHandler := NewUserHandler(db)
 	api.Post("/login", userHandler.Login)
 	api.Post("/refresh", userHandler.Refresh)
+	captchaHandler := NewCaptchaHandler(db)
+	api.Get("/captcha", captchaHandler.GetC)
 
 	return app
 }
