@@ -67,11 +67,11 @@ func (l *slogLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 	switch {
 	case err != nil && l.LogLevel >= logger.Error:
 		attrs = append(attrs, slog.String("error", err.Error()))
-		slog.LogAttrs(ctx, slog.LevelError, "gorm", attrs...)
+		slog.LogAttrs(ctx, slog.LevelError, "数据库", attrs...)
 	case elapsed > 200*time.Millisecond && l.LogLevel >= logger.Warn:
-		slog.LogAttrs(ctx, slog.LevelWarn, "slow query", attrs...)
+		slog.LogAttrs(ctx, slog.LevelWarn, "慢查询", attrs...)
 	case l.LogLevel >= logger.Info:
-		slog.LogAttrs(ctx, slog.LevelInfo, "gorm", attrs...)
+		slog.LogAttrs(ctx, slog.LevelInfo, "数据库", attrs...)
 	}
 }
 
@@ -80,12 +80,12 @@ func Init(dbPath string) *gorm.DB {
 		Logger: newSlogLogger(),
 	})
 	if err != nil {
-		slog.Error("failed to connect database", "error", err)
+		slog.Error("连接数据库失败", "error", err)
 		panic(err)
 	}
 
 	if err := db.AutoMigrate(&model.User{}); err != nil {
-		slog.Error("failed to migrate database", "error", err)
+		slog.Error("数据库迁移失败", "error", err)
 		panic(err)
 	}
 
@@ -103,7 +103,7 @@ func seedAdmin(db *gorm.DB) {
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	if err != nil {
-		slog.Error("failed to hash password", "error", err)
+		slog.Error("密码加密失败", "error", err)
 		panic(err)
 	}
 
@@ -115,9 +115,9 @@ func seedAdmin(db *gorm.DB) {
 	}
 
 	if err := db.Create(&admin).Error; err != nil {
-		slog.Error("failed to seed admin user", "error", err)
+		slog.Error("初始化管理员用户失败", "error", err)
 		panic(err)
 	}
 
-	slog.Info("Super admin user created", "name", "admin", "password", "password")
+	slog.Info("超级管理员用户已创建", "name", "admin", "password", "password")
 }

@@ -11,7 +11,7 @@ type Response struct {
 func Success(c fiber.Ctx, data any) error {
 	return c.Status(fiber.StatusOK).JSON(Response{
 		Code:    0,
-		Message: "ok",
+		Message: "成功",
 		Data:    data,
 	})
 }

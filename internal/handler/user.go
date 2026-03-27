@@ -32,31 +32,31 @@ type tokenResponse struct {
 func (h *UserHandler) Login(c fiber.Ctx) error {
 	var req loginRequest
 	if err := c.Bind().JSON(&req); err != nil {
-		return common.FailWithCode(c, 400, "invalid request body")
+		return common.FailWithCode(c, 400, "请求体无效")
 	}
 
 	if req.Name == "" || req.Password == "" {
-		return common.FailWithCode(c, 400, "name and password are required")
+		return common.FailWithCode(c, 400, "用户名和密码为必填项")
 	}
 
 	var user model.User
 	if err := h.DB.Where("name = ?", req.Name).First(&user).Error; err != nil {
-		slog.Warn("login failed: user not found", "name", req.Name)
-		return common.FailWithCode(c, 401, "invalid name or password")
+		slog.Warn("登录失败：用户不存在", "name", req.Name)
+		return common.FailWithCode(c, 401, "用户名或密码无效")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		slog.Warn("login failed: wrong password", "name", req.Name)
-		return common.FailWithCode(c, 401, "invalid name or password")
+		slog.Warn("登录失败：密码错误", "name", req.Name)
+		return common.FailWithCode(c, 401, "用户名或密码无效")
 	}
 
 	tokens, err := generateTokens(user.ID)
 	if err != nil {
-		slog.Error("failed to generate tokens", "error", err)
-		return common.Fail(c, fiber.StatusInternalServerError, "internal error")
+		slog.Error("生成令牌失败", "error", err)
+		return common.Fail(c, fiber.StatusInternalServerError, "服务器内部错误")
 	}
 
-	slog.Info("user logged in", "name", user.Name, "id", user.ID)
+	slog.Info("用户登录成功", "name", user.Name, "id", user.ID)
 
 	return common.Success(c, tokens)
 }
@@ -66,26 +66,26 @@ func (h *UserHandler) Refresh(c fiber.Ctx) error {
 		RefreshToken string `json:"refresh_token"`
 	}
 	if err := c.Bind().JSON(&req); err != nil {
-		return common.FailWithCode(c, 400, "invalid request body")
+		return common.FailWithCode(c, 400, "请求体无效")
 	}
 
 	if req.RefreshToken == "" {
-		return common.FailWithCode(c, 400, "refresh_token is required")
+		return common.FailWithCode(c, 400, "refresh_token 为必填项")
 	}
 
 	claims, err := common.ParseToken(req.RefreshToken)
 	if err != nil {
-		return common.FailWithCode(c, 401, "invalid refresh token")
+		return common.FailWithCode(c, 401, "refresh token 无效")
 	}
 
 	if claims.TokenType != "refresh" {
-		return common.FailWithCode(c, 401, "invalid token type")
+		return common.FailWithCode(c, 401, "令牌类型无效")
 	}
 
 	tokens, err := generateTokens(claims.UserID)
 	if err != nil {
-		slog.Error("failed to generate tokens", "error", err)
-		return common.Fail(c, fiber.StatusInternalServerError, "internal error")
+		slog.Error("生成令牌失败", "error", err)
+		return common.Fail(c, fiber.StatusInternalServerError, "服务器内部错误")
 	}
 
 	return common.Success(c, tokens)

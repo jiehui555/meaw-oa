@@ -55,5 +55,5 @@ func ParseToken(tokenString string) (*Claims, error) {
 		return claims, nil
 	}
 
-	return nil, errors.New("invalid token")
+	return nil, errors.New("无效的令牌")
 }

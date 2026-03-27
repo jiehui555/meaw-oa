@@ -27,9 +27,9 @@ func main() {
 	api.Post("/refresh", userHandler.Refresh)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
-	slog.Info("server starting", "addr", addr)
+	slog.Info("服务器启动中", "addr", addr)
 	if err := app.Listen(addr); err != nil {
-		slog.Error("server failed to start", "error", err)
+		slog.Error("服务器启动失败", "error", err)
 		panic(err)
 	}
 }
