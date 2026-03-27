@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/glebarez/sqlite"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
@@ -23,5 +24,33 @@ func Init(dbPath string) *gorm.DB {
 		log.Fatal(fmt.Errorf("failed to migrate database: %w", err))
 	}
 
+	seedAdmin(db)
+
 	return db
+}
+
+func seedAdmin(db *gorm.DB) {
+	var count int64
+	db.Model(&model.User{}).Where("name = ?", "admin").Count(&count)
+	if count > 0 {
+		return
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal(fmt.Errorf("failed to hash password: %w", err))
+	}
+
+	admin := model.User{
+		Name:     "admin",
+		Phone:    "00000000000",
+		Email:    "admin@meaw.com",
+		Password: string(hashed),
+	}
+
+	if err := db.Create(&admin).Error; err != nil {
+		log.Fatal(fmt.Errorf("failed to seed admin user: %w", err))
+	}
+
+	log.Println("Super admin user created (admin / password)")
 }
