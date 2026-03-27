@@ -1,13 +1,29 @@
 package main
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"fmt"
+	"log"
+
+	"github.com/gofiber/fiber/v3"
+
+	"github.com/jiehui555/meaw-oa/internal/config"
+	"github.com/jiehui555/meaw-oa/internal/database"
+)
 
 func main() {
-    app := fiber.New()
+	cfg := config.Load()
 
-    app.Get("/", func(c fiber.Ctx) error {
-        return c.SendString("Hello, World!")
-    })
+	db := database.Init(cfg.DBPath)
+	_ = db
 
-    app.Listen(":3000")
+	app := fiber.New()
+
+	app.Get("/", func(c fiber.Ctx) error {
+		return c.SendString("Hello, World!")
+	})
+
+	addr := fmt.Sprintf(":%s", cfg.Port)
+	if err := app.Listen(addr); err != nil {
+		log.Fatal(err)
+	}
 }
