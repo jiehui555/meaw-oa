@@ -43,7 +43,7 @@ package main
 
 import (
     "fmt"
-    "log"
+    "log/slog"
 
     "github.com/gofiber/fiber/v3"
 
@@ -66,11 +66,13 @@ import (
 - 必须显式处理每个错误，**禁止** 使用 `_` 忽略
 - 包装错误时使用 `fmt.Errorf("context: %w", err)`
 - Fiber handler 返回 `error`，由框架统一处理
-- 启动失败应 `log.Fatal(err)` 或 `panic`
+- 启动失败使用 `slog.Error` + `panic`
+- 日志统一使用 `log/slog`，不要使用 `log` 标准包
 
 ```go
 if err := app.Listen(":3000"); err != nil {
-    log.Fatal(err)
+    slog.Error("server failed to start", "error", err)
+    panic(err)
 }
 ```
 
@@ -84,27 +86,23 @@ if err := app.Listen(":3000"); err != nil {
 ### 测试规范
 
 - 测试函数命名：`TestFunctionName_Scenario`
-- 使用标准 `testing` 包
-- 可用 `testify` 做断言（如引入的话）
-- 表驱动测试优先使用 `t.Run()` 子测试
+- 使用标准 `testing` 包，子测试使用 `t.Run()`
+- API 测试使用 Fiber 的 `app.Test()` + 内存 SQLite，不启动真实服务器
+- 测试基础设施放在 `handler_test.go`，业务测试放在 `xxx_test.go`
 
 ```go
-func TestAdd(t *testing.T) {
-    tests := []struct {
-        name string
-        a, b int
-        want int
-    }{
-        {"positive", 1, 2, 3},
-        {"negative", -1, -1, -2},
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            if got := Add(tt.a, tt.b); got != tt.want {
-                t.Errorf("Add() = %d, want %d", got, tt.want)
-            }
+func TestLogin(t *testing.T) {
+    db := setupTestDB(t)
+    app := setupApp(t, db)
+
+    t.Run("success", func(t *testing.T) {
+        _, res := doRequest(t, app, "POST", "/api/login", map[string]string{
+            "name": "admin", "password": "password",
         })
-    }
+        if res.Code != 0 {
+            t.Errorf("expected code 0, got %d", res.Code)
+        }
+    })
 }
 ```
 
@@ -128,12 +126,14 @@ func TestAdd(t *testing.T) {
 ├── main.go
 ├── go.mod
 ├── internal/
-│   ├── config/       # 配置加载
-│   ├── handler/      # HTTP 处理器
-│   ├── middleware/    # 中间件
-│   ├── model/        # 数据模型
-│   └── service/      # 业务逻辑
-└── docs/             # 文档（如需要）
+│   ├── common/        # 通用工具（响应、JWT 等）
+│   ├── config/        # 配置加载
+│   ├── database/      # 数据库连接与迁移
+│   ├── handler/       # HTTP 处理器
+│   ├── logger/        # 日志初始化
+│   ├── middleware/     # 中间件
+│   └── model/         # 数据模型
+└── docs/              # 文档（如需要）
 ```
 
 ---

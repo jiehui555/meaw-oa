@@ -8,6 +8,7 @@ import (
 
 	"github.com/jiehui555/meaw-oa/internal/config"
 	"github.com/jiehui555/meaw-oa/internal/database"
+	"github.com/jiehui555/meaw-oa/internal/handler"
 	"github.com/jiehui555/meaw-oa/internal/logger"
 )
 
@@ -17,13 +18,12 @@ func main() {
 	logger.Init(cfg.LogPath)
 
 	db := database.Init(cfg.DBPath)
-	_ = db
 
 	app := fiber.New()
 
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
+	api := app.Group("/api")
+	userHandler := handler.NewUserHandler(db)
+	api.Post("/login", userHandler.Login)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	slog.Info("server starting", "addr", addr)
