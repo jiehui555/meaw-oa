@@ -119,21 +119,26 @@ func TestLogin(t *testing.T) {
 - 避免 goroutine 泄漏，使用 `context.Context` 控制生命周期
 - channel 操作注意死锁风险
 
-### 目录结构建议（随着项目增长）
+### 目录结构（当前）
 
 ```
 .
-├── main.go
-├── go.mod
-├── internal/
-│   ├── common/        # 通用工具（响应、JWT 等）
-│   ├── config/        # 配置加载
-│   ├── database/      # 数据库连接与迁移
-│   ├── handler/       # HTTP 处理器
-│   ├── logger/        # 日志初始化
-│   ├── middleware/     # 中间件
-│   └── model/         # 数据模型
-└── docs/              # 文档（如需要）
+├── main.go                 # 应用入口
+├── go.mod                  # Go 模块定义
+├── go.sum                  # 依赖校验文件
+├── .goreleaser.yaml        # GoReleaser 配置（构建发布）
+├── .gitignore              # Git 忽略规则
+├── .github/                # GitHub 配置（CI/CD 等）
+├── AGENTS.md               # 项目指南（本文件）
+├── internal/               # 内部包（不对外暴露）
+│   ├── common/             # 通用工具（响应、JWT 等）
+│   ├── config/             # 配置加载
+│   ├── database/           # 数据库连接与迁移
+│   ├── handler/            # HTTP 处理器
+│   ├── logger/             # 日志初始化
+│   ├── middleware/         # 中间件
+│   └── model/              # 数据模型
+└── docs/                   # 文档（如需要）
 ```
 
 ---
