@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
@@ -20,8 +21,10 @@ func NewUserHandler(db *gorm.DB) *UserHandler {
 }
 
 type loginRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	Name          string `json:"name"`
+	Password      string `json:"password"`
+	CaptchaID     string `json:"captcha_id"`
+	CaptchaAnswer string `json:"captcha_answer"`
 }
 
 type tokenResponse struct {
@@ -37,6 +40,25 @@ func (h *UserHandler) Login(c fiber.Ctx) error {
 
 	if req.Name == "" || req.Password == "" {
 		return common.FailWithCode(c, 400, "用户名和密码为必填项")
+	}
+
+	if req.CaptchaID == "" || req.CaptchaAnswer == "" {
+		return common.FailWithCode(c, 400, "验证码为必填项")
+	}
+
+	var captcha model.Captcha
+	if err := h.DB.Where("captcha_id = ?", req.CaptchaID).First(&captcha).Error; err != nil {
+		return common.FailWithCode(c, 400, "验证码无效")
+	}
+
+	h.DB.Delete(&captcha)
+
+	if time.Now().After(captcha.ExpiresAt) {
+		return common.FailWithCode(c, 400, "验证码已过期")
+	}
+
+	if captcha.Answer != req.CaptchaAnswer {
+		return common.FailWithCode(c, 400, "验证码错误")
 	}
 
 	var user model.User

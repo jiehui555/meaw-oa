@@ -84,7 +84,7 @@ func Init(dbPath string) *gorm.DB {
 		panic(err)
 	}
 
-	if err := db.AutoMigrate(&model.User{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.Captcha{}); err != nil {
 		slog.Error("数据库迁移失败", "error", err)
 		panic(err)
 	}

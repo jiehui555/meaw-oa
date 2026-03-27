@@ -25,8 +25,10 @@ func main() {
 
 	api := app.Group("/api")
 	userHandler := handler.NewUserHandler(db)
+	captchaHandler := handler.NewCaptchaHandler(db)
 	api.Post("/login", userHandler.Login)
 	api.Post("/refresh", userHandler.Refresh)
+	api.Get("/captcha", captchaHandler.GetC)
 
 	admin := api.Group("/admin", middleware.Auth(db), middleware.Admin())
 	admin.Get("/dashboard", func(c fiber.Ctx) error {
