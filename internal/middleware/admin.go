@@ -7,6 +7,8 @@ import (
 	"github.com/jiehui555/meaw-oa/internal/model"
 )
 
+// Admin 管理员权限中间件
+// 验证当前用户是否为管理员（用户名为 admin）
 func Admin() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		user, ok := c.Locals("user").(model.User)

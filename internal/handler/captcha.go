@@ -12,14 +12,17 @@ import (
 	"github.com/jiehui555/meaw-oa/internal/model"
 )
 
+// CaptchaHandler 验证码处理器
 type CaptchaHandler struct {
 	DB *gorm.DB
 }
 
+// NewCaptchaHandler 创建验证码处理器实例
 func NewCaptchaHandler(db *gorm.DB) *CaptchaHandler {
 	return &CaptchaHandler{DB: db}
 }
 
+// GetC 生成并返回验证码图片
 func (h *CaptchaHandler) GetC(c fiber.Ctx) error {
 	driver := base64Captcha.NewDriverDigit(80, 240, 5, 0.7, 80)
 	cp := base64Captcha.NewCaptcha(driver, base64Captcha.DefaultMemStore)

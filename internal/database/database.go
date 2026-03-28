@@ -15,6 +15,7 @@ import (
 	"github.com/jiehui555/meaw-oa/internal/model"
 )
 
+// slogLogger GORM 日志适配器，使用 slog 输出日志
 type slogLogger struct {
 	LogLevel logger.LogLevel
 }
@@ -75,6 +76,8 @@ func (l *slogLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 	}
 }
 
+// Init 初始化数据库连接并执行迁移
+// dbPath: SQLite 数据库文件路径
 func Init(dbPath string) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: newSlogLogger(),
@@ -94,6 +97,7 @@ func Init(dbPath string) *gorm.DB {
 	return db
 }
 
+// seedAdmin 初始化默认管理员账户
 func seedAdmin(db *gorm.DB) {
 	var count int64
 	db.Model(&model.User{}).Where("name = ?", "admin").Count(&count)

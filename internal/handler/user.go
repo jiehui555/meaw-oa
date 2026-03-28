@@ -12,14 +12,17 @@ import (
 	"github.com/jiehui555/meaw-oa/internal/model"
 )
 
+// UserHandler 用户处理器
 type UserHandler struct {
 	DB *gorm.DB
 }
 
+// NewUserHandler 创建用户处理器实例
 func NewUserHandler(db *gorm.DB) *UserHandler {
 	return &UserHandler{DB: db}
 }
 
+// loginRequest 登录请求结构
 type loginRequest struct {
 	Name          string `json:"name"`
 	Password      string `json:"password"`
@@ -27,11 +30,13 @@ type loginRequest struct {
 	CaptchaAnswer string `json:"captcha_answer"`
 }
 
+// tokenResponse 令牌响应结构
 type tokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
+// Login 用户登录处理函数
 func (h *UserHandler) Login(c fiber.Ctx) error {
 	var req loginRequest
 	if err := c.Bind().JSON(&req); err != nil {
@@ -83,6 +88,7 @@ func (h *UserHandler) Login(c fiber.Ctx) error {
 	return common.Success(c, tokens)
 }
 
+// Refresh 刷新令牌处理函数
 func (h *UserHandler) Refresh(c fiber.Ctx) error {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`
@@ -113,6 +119,7 @@ func (h *UserHandler) Refresh(c fiber.Ctx) error {
 	return common.Success(c, tokens)
 }
 
+// generateTokens 生成访问令牌和刷新令牌
 func generateTokens(userID uint) (*tokenResponse, error) {
 	accessToken, err := common.GenerateAccessToken(userID)
 	if err != nil {

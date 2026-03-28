@@ -7,14 +7,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// JWT 密钥
 var jwtSecret = []byte("meaw-oa-secret")
 
+// Claims JWT 声明结构
 type Claims struct {
 	UserID    uint   `json:"user_id"`
-	TokenType string `json:"token_type"`
+	TokenType string `json:"token_type"` // 令牌类型：access 或 refresh
 	jwt.RegisteredClaims
 }
 
+// GenerateAccessToken 生成访问令牌
+// 有效期为 2 小时
 func GenerateAccessToken(userID uint) (string, error) {
 	claims := Claims{
 		UserID:    userID,
@@ -29,6 +33,8 @@ func GenerateAccessToken(userID uint) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
+// GenerateRefreshToken 生成刷新令牌
+// 有效期为 30 天
 func GenerateRefreshToken(userID uint) (string, error) {
 	claims := Claims{
 		UserID:    userID,
@@ -43,6 +49,7 @@ func GenerateRefreshToken(userID uint) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
+// ParseToken 解析 JWT 令牌
 func ParseToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		return jwtSecret, nil

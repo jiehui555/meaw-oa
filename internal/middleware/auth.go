@@ -10,6 +10,8 @@ import (
 	"github.com/jiehui555/meaw-oa/internal/model"
 )
 
+// Auth 认证中间件
+// 验证请求中的 JWT 令牌，并将用户信息存储到上下文
 func Auth(db *gorm.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
